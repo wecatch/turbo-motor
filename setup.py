@@ -11,7 +11,9 @@ with open('HISTORY.rst') as history_file:
 
 requirements = [
     'Click>=6.0',
-    # TODO: put package requirements here
+    'pymongo==3.4',
+    'motor==1.1',
+    'turbo==0.4.5'
 ]
 
 test_requirements = [
