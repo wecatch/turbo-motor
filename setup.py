@@ -22,7 +22,7 @@ test_requirements = [
 
 setup(
     name='turbo_motor',
-    version='0.0.1',
+    version='0.0.2',
     description="Turbo motor plugin",
     long_description=readme + '\n\n' + history,
     author="zhyq0826",
