@@ -157,6 +157,14 @@ class BaseModelTest(AsyncTestCase):
         self.assertEqual(result['value'], 0)
         self.tb_tag.remove_by_id(_id)
 
+    @gen_test
+    def test_inc(self):
+        _id = yield self.tb_tag.insert({'value': 10})
+        yield self.tb_tag.inc({'_id': _id}, 'value')
+        result = yield self.tb_tag.find_by_id(_id)
+        self.assertEqual(result['value'], 11)
+        yield self.tb_tag.remove_by_id(_id)
+
     # def test_find_wrapper(self):
     #     # test find wrapper=True return generator
     #     one = self.m.find_one()
