@@ -72,6 +72,9 @@ class BaseBaseModel(AbstractModel):
     @gen.coroutine
     def find_many(self, *args, **kwargs):
         """find many return motor cursor result, limit is required
+        coroutine can't return yield genearotr as result,
+        instead use a queue do infinite loop
+        http://stackoverflow.com/questions/33482066/using-regular-python-generator-in-tornado-coroutine
         """
         wrapper = kwargs.pop('wrapper', False)
         limit = kwargs.get('limit')
@@ -84,14 +87,6 @@ class BaseBaseModel(AbstractModel):
             result.append(_record(doc) if wrapper else doc)
 
         raise gen.Return(result)
-
-    def find(self, *args, **kwargs):
-        """
-        coroutine can't return yield genearotr as result,
-        instead use a queue do infinite loop
-        http://stackoverflow.com/questions/33482066/using-regular-python-generator-in-tornado-coroutine
-        """
-        return self.__collect.find(*args, **kwargs)
 
     @gen.coroutine
     def update(self, spec, document, multi=False, **kwargs):

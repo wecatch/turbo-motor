@@ -27,7 +27,7 @@ from tornado.queues import Queue
 from motor import motor_tornado
 import motor
 from turbo_motor.model import BaseModel
-from util import fake_ids, fake_ids_2
+from tests.util import fake_ids, fake_ids_2
 
 os.environ['ASYNC_TEST_TIMEOUT'] = '10'
 
