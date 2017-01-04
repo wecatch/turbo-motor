@@ -135,14 +135,14 @@ class BaseBaseModel(AbstractModel):
     #     return self.__gridfs.get(self.to_objectid(_id)).read()
 
     @gen.coroutine
-    def find_by_id(self, _id, column=None):
+    def find_by_id(self, _id, *args):
         """find record by _id
         """
         if isinstance(_id, list) or isinstance(_id, tuple):
             as_list = []
             for i in _id:
                 result = yield self.__collect.find_one(
-                    {'_id': self._to_primary_key(i)}, column)
+                    {'_id': self._to_primary_key(i)}, *args)
                 as_list.append(result)
             raise gen.Return(as_list)
 
@@ -151,7 +151,7 @@ class BaseBaseModel(AbstractModel):
         if document_id is None:
             raise gen.Return(None)
 
-        result = yield self.__collect.find_one({'_id': document_id}, column)
+        result = yield self.__collect.find_one({'_id': document_id}, *args)
         raise gen.Return(result)
 
     @gen.coroutine
@@ -176,16 +176,12 @@ class BaseBaseModel(AbstractModel):
             raise gen.Return(document)
 
     @gen.coroutine
-    def get_as_dict(self, condition=None, column=None, skip=0, limit=0, sort=None):
-        if column is None:
-            column = self.column
-
-        cur = self.__collect.find(condition, column, skip=skip, limit=limit, sort=sort)
-
+    def get_as_dict(self, *args, **kwargs):
+        cur = self.__collect.find(*args, **kwargs)
         as_dict, as_list = {}, []
-        while (yield cursor.fetch_next):
-            doc = cursor.next_object()
-            as_dict[doc['_id']] = doc 
+        while (yield cur.fetch_next):
+            doc = cur.next_object()
+            as_dict[doc['_id']] = doc
             as_list.append(doc)
 
         raise gen.Return([as_dict, as_list])

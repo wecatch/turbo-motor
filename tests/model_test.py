@@ -170,7 +170,7 @@ class BaseModelTest(AsyncTestCase):
     def test_find_many(self):
         result = yield self.tb_tag.find_many(limit=10)
         self.assertEqual(len(result), 10)
-    
+
     @gen_test
     def test_find(self):
         cursor = self.tb_tag.find()
@@ -179,6 +179,11 @@ class BaseModelTest(AsyncTestCase):
             doc = cursor.next_object()
             count += 1
         self.assertGreater(count, 40)
+
+    @gen_test
+    def test_get_as_dict(self):
+        d, ll = yield self.tb_tag.get_as_dict()
+        self.assertEqual(len(d), len(ll))
 
     @gen_test
     def test_find_new_one(self):
