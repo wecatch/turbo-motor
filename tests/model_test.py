@@ -23,6 +23,7 @@ from pymongo import (
 )
 from tornado.testing import gen_test, AsyncTestCase
 from tornado import gen
+from tornado.queues import Queue
 from motor import motor_tornado
 import motor
 from turbo_motor.model import BaseModel
@@ -165,21 +166,24 @@ class BaseModelTest(AsyncTestCase):
         self.assertEqual(result['value'], 11)
         yield self.tb_tag.remove_by_id(_id)
 
-    # def test_find_wrapper(self):
-    #     # test find wrapper=True return generator
-    #     one = self.m.find_one()
-    #     with self.assertRaises(KeyError):
-    #         one['keyerror']
+    @gen_test
+    def test_find_many(self):
+        result = yield self.tb_tag.find_many(limit=10)
+        self.assertEqual(len(result), 10)
+    
+    @gen_test
+    def test_find(self):
+        cursor = self.tb_tag.find()
+        count = 0
+        while (yield cursor.fetch_next):
+            doc = cursor.next_object()
+            count += 1
+        self.assertGreater(count, 40)
 
-    #     one = self.m.find_one(wrapper=True)
-    #     self.assertEqual(one['keyerror'], None)
-
-    #     for one in self.m.find(limit=5):
-    #         with self.assertRaises(KeyError):
-    #             one['keyerror']
-
-    #     for one in self.m.find(limit=5, wrapper=True):
-    #         self.assertEqual(one['keyerror'], None)
+    @gen_test
+    def test_find_new_one(self):
+        result = yield self.tb_tag.find_new_one()
+        self.assertIsNot(result, None)
 
 
 if __name__ == '__main__':

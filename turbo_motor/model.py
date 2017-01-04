@@ -34,7 +34,8 @@ class BaseBaseModel(AbstractModel):
     def __getattr__(self, k):
         attr = getattr(self.__collect, k)
         if isinstance(attr, MotorCollection):
-            raise AttributeError("model object '%s' has not attribute '%s'" % (self.name, k))
+            raise AttributeError(
+                "model object '%s' has not attribute '%s'" % (self.name, k))
         return attr
 
     def sub_collection(self, name):
@@ -68,16 +69,29 @@ class BaseBaseModel(AbstractModel):
 
         raise gen.Return(result)
 
-    # @gen.coroutine
-    # def find(self, *args, **kwargs):
-    #     """collection find method
-    #     http://stackoverflow.com/questions/33482066/using-regular-python-generator-in-tornado-coroutine
-    #     """
-    #     queue = kwargs.pop('queue', None)
-    #     cursor = self.__collect.find(*args, **kwargs)
-    #     while (yield cursor.fetch_next):
-    #         doc = cursor.next_object()
-    #         queue.put(doc)
+    @gen.coroutine
+    def find_many(self, *args, **kwargs):
+        """find many return motor cursor result, limit is required
+        """
+        wrapper = kwargs.pop('wrapper', False)
+        limit = kwargs.get('limit')
+        if not limit:
+            kwargs['limit'] = 1
+        cursor = self.__collect.find(*args, **kwargs)
+        result = []
+        while (yield cursor.fetch_next):
+            doc = cursor.next_object()
+            result.append(_record(doc) if wrapper else doc)
+
+        raise gen.Return(result)
+
+    def find(self, *args, **kwargs):
+        """
+        coroutine can't return yield genearotr as result,
+        instead use a queue do infinite loop
+        http://stackoverflow.com/questions/33482066/using-regular-python-generator-in-tornado-coroutine
+        """
+        return self.__collect.find(*args, **kwargs)
 
     @gen.coroutine
     def update(self, spec, document, multi=False, **kwargs):
@@ -90,7 +104,8 @@ class BaseBaseModel(AbstractModel):
         if not document:
             raise ValueError("empty document update not allowed")
 
-        result = yield self.__collect.update(spec, document, multi=multi, **kwargs)
+        result = yield self.__collect.update(
+            spec, document, multi=multi, **kwargs)
         raise gen.Return(result)
 
     @gen.coroutine
@@ -158,32 +173,27 @@ class BaseBaseModel(AbstractModel):
             {'_id': self._to_primary_key(_id)})
         raise gen.Return(result)
 
-    # @gen.coroutine
-    # def find_new_one(self, *args, **kwargs):
-    #     cur = list(self.__collect.find(*args, **kwargs).limit(1).sort('_id', DESCENDING))
-    #     if cur:
-    #         return cur[0]
+    @gen.coroutine
+    def find_new_one(self, *args, **kwargs):
+        cur = self.__collect.find(*args, **kwargs)
+        cur.limit(1).sort('_id', DESCENDING)
+        for document in (yield cur.to_list(length=1)):
+            raise gen.Return(document)
 
-    #     return None
+    @gen.coroutine
+    def get_as_dict(self, condition=None, column=None, skip=0, limit=0, sort=None):
+        if column is None:
+            column = self.column
 
-    # def get_as_column(self, condition=None, column=None, skip=0, limit=0, sort=None):
-    #     if column is None:
-    #         column = self.column
+        cur = self.__collect.find(condition, column, skip=skip, limit=limit, sort=sort)
 
-    #     return self.find(condition, column, skip=skip, limit=limit, sort=sort)
+        as_dict, as_list = {}, []
+        while (yield cursor.fetch_next):
+            doc = cursor.next_object()
+            as_dict[doc['_id']] = doc 
+            as_list.append(doc)
 
-    # def get_as_dict(self, condition=None, column=None, skip=0, limit=0, sort=None):
-    #     if column is None:
-    #         column = self.column
-
-    #     as_list = self.__collect.find(condition, column, skip=skip, limit=limit, sort=sort)
-
-    #     as_dict, as_list = {}, []
-    #     for i in as_list:
-    #         as_dict[str(i['_id'])] = i
-    #         as_list.append(i)
-
-    #     return as_dict, as_list
+        raise gen.Return([as_dict, as_list])
 
     @gen.coroutine
     def create(self, record=None, **args):
