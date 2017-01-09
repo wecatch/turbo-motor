@@ -85,7 +85,7 @@ class BaseModelTest(AsyncTestCase):
     @gen_test
     def test_insert(self):
         _id = yield self.tb_tag.insert({'_id': fake_ids_2[0]})
-        self.assertIsNot(_id, fake_ids_2[0])
+        self.assertEqual(_id, fake_ids_2[0])
 
     @gen_test
     def test_insert_one(self):
@@ -95,7 +95,7 @@ class BaseModelTest(AsyncTestCase):
     @gen_test
     def test_find_one(self):
         result = yield self.tb_tag.find_one()
-        self.assertIsNot(result, None)
+        self.assertEqual(result, None)
 
     @gen_test
     def test_find_one_with_wrapper(self):

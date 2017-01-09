@@ -19,17 +19,10 @@ from turbo.mongo_model import (
 class BaseBaseModel(AbstractModel):
     """class implement almost all mongodb collection method
     """
-    PRIMARY_KEY_TYPE = ObjectId
 
     def __init__(self, db_name='test', _MONGO_DB_MAPPING=None):
         self.__collect, self.__gridfs = super(
             BaseBaseModel, self)._init(db_name, _MONGO_DB_MAPPING)
-
-    def _to_primary_key(self, _id):
-        if self.PRIMARY_KEY_TYPE is ObjectId:
-            return self.to_objectid(_id)
-
-        return _id
 
     def __getattr__(self, k):
         attr = getattr(self.__collect, k)
@@ -51,19 +44,66 @@ class BaseBaseModel(AbstractModel):
         raise gen.Return(self._to_primary_key(result.inserted_id))
 
     @gen.coroutine
+    def save(self, to_save, **kwargs):
+        """save method
+        """
+        self._valid_record(to_save)
+        if '_id' in to_save:
+            yield self.__collect.replace_one({'_id': to_save['_id']}, to_save, **kwargs)
+            raise gen.Return(to_save['_id'])
+        else:
+            result = yield self.__collect.insert_one(to_save, **kwargs)
+            raise gen.Return(self._to_primary_key(result.inserted_id))
+
+    @gen.coroutine
+    def update(self, filter_, document, multi=False, **kwargs):
+        """update method
+        """
+        self._valide_update_document(document)
+        if multi:
+            result = yield self.__collect.update_many(
+                filter_, document, **kwargs)
+        else:
+            result = yield self.__collect.update_one(
+                filter_, document, **kwargs
+            )
+        raise gen.Return(result)
+
+    @gen.coroutine
+    def remove(self, filter_=None, **kwargs):
+        """collection remove method
+        warning:
+            if you want to remove all documents,
+            you must override _remove_all method to make sure
+            you understand the result what you do
+        """
+        if isinstance(filter_, dict) and filter_ == {}:
+            raise ValueError("not allowed remove all documents")
+
+        if filter_ is None:
+            raise ValueError("not allowed remove all documents")
+
+        if kwargs.pop('multi', False) is True:
+            result = yield self.__collect.delete_many(filter_, **kwargs)
+        else:
+            result = yield self.__collect.delete_one(filter_, **kwargs)
+
+        raise gen.Return(result)
+
+    @gen.coroutine
     def insert_one(self, doc_or_docs, **kwargs):
         result = yield self.__collect.insert_one(doc_or_docs, **kwargs)
         raise gen.Return(result)
 
     @gen.coroutine
-    def find_one(self, spec_or_id=None, *args, **kwargs):
+    def find_one(self, filter_=None, *args, **kwargs):
         """
         :args
             wrapper wrap result to _record or not
 
         """
         wrapper = kwargs.pop('wrapper', False)
-        result = yield self.__collect.find_one(spec_or_id, *args, **kwargs)
+        result = yield self.__collect.find_one(filter_, *args, **kwargs)
         if wrapper is True:
             raise gen.Return(_record(result))
 
@@ -86,38 +126,6 @@ class BaseBaseModel(AbstractModel):
             doc = cursor.next_object()
             result.append(_record(doc) if wrapper else doc)
 
-        raise gen.Return(result)
-
-    @gen.coroutine
-    def update(self, spec, document, multi=False, **kwargs):
-        """update method
-        """
-        for opk in document.keys():
-            if not opk.startswith('$') or opk not in self._operators:
-                raise ValueError("invalid document update operator")
-
-        if not document:
-            raise ValueError("empty document update not allowed")
-
-        result = yield self.__collect.update(
-            spec, document, multi=multi, **kwargs)
-        raise gen.Return(result)
-
-    @gen.coroutine
-    def remove(self, spec_or_id=None, **kwargs):
-        """collection remove method
-        warning:
-            if you want to remove all documents,
-            you must override _remove_all method to make sure
-            you understand the result what you do
-        """
-        if isinstance(spec_or_id, dict) and spec_or_id == {}:
-            raise ValueError("not allowed remove all documents")
-
-        if spec_or_id is None:
-            raise ValueError("not allowed remove all documents")
-
-        result = yield self.__collect.delete_one(spec_or_id, **kwargs)
         raise gen.Return(result)
 
     # def put(self, value, **kwargs):
@@ -200,8 +208,8 @@ class BaseBaseModel(AbstractModel):
         raise gen.Return(result)
 
     @gen.coroutine
-    def inc(self, spec_or_id, key, num=1):
-        result = yield self.__collect.update_one(spec_or_id, {'$inc': {key: num}})
+    def inc(self, filter_, key, num=1):
+        result = yield self.__collect.update_one(filter_, {'$inc': {key: num}})
         raise gen.Return(result)
 
 
