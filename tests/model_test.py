@@ -87,6 +87,14 @@ class BaseModelTest(AsyncTestCase):
         _id = yield self.tb_tag.insert({'_id': fake_ids_2[0]})
         self.assertEqual(_id, fake_ids_2[0])
 
+        with self.assertRaises(Exception):
+            result = yield self.tb_tag.inert({'nokey': 10})
+        _id = yield self.tb_tag.insert({'imgid': None})
+        self.assertIsNot(_id, None)
+        result = yield self.tb_tag.find_by_id(_id)
+        self.assertEqual(result['value'], 0)
+        self.tb_tag.remove_by_id(_id)
+
     @gen_test
     def test_insert_one(self):
         result = yield self.tb_tag.insert_one({'_id': fake_ids_2[0]})
@@ -95,7 +103,7 @@ class BaseModelTest(AsyncTestCase):
     @gen_test
     def test_find_one(self):
         result = yield self.tb_tag.find_one()
-        self.assertEqual(result, None)
+        self.assertIsNot(result, None)
 
     @gen_test
     def test_find_one_with_wrapper(self):
@@ -145,18 +153,7 @@ class BaseModelTest(AsyncTestCase):
         self.assertEqual(result.deleted_count, 1)
 
         result = yield self.tb_tag.remove_by_id(fake_ids[1:10])
-        for index, i in enumerate(result):
-            self.assertEqual(i.deleted_count, 1)
-
-    @gen_test
-    def test_create(self):
-        with self.assertRaises(Exception):
-            result = yield self.tb_tag.create({'nokey': 10})
-        _id = yield self.tb_tag.create({'imgid': None})
-        self.assertIsNot(_id, None)
-        result = yield self.tb_tag.find_by_id(_id)
-        self.assertEqual(result['value'], 0)
-        self.tb_tag.remove_by_id(_id)
+        self.assertEqual(result.deleted_count, 9)
 
     @gen_test
     def test_inc(self):

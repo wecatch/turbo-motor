@@ -40,8 +40,18 @@ class BaseBaseModel(AbstractModel):
         return
             insert doc _id backwards compatibility
         """
-        result = yield self.__collect.insert_one(doc_or_docs, **kwargs)
-        raise gen.Return(self._to_primary_key(result.inserted_id))
+        check = kwargs.pop('check', True)
+        if isinstance(doc_or_docs, dict):
+            if check is True:
+                doc_or_docs = self._valid_record(doc_or_docs)
+            result = yield self.__collect.insert_one(doc_or_docs, **kwargs)
+            raise gen.Return(self._to_primary_key(result.inserted_id))
+        else:
+            if check is True:
+                for i in record:
+                    i = self._valid_record(i)
+            result = yield self.__collect.insert_many(doc_or_docs, **kwargs)
+            raise gen.Return([self._to_primary_key(i) for i in result.inserted_ids])
 
     @gen.coroutine
     def save(self, to_save, **kwargs):
@@ -92,7 +102,19 @@ class BaseBaseModel(AbstractModel):
 
     @gen.coroutine
     def insert_one(self, doc_or_docs, **kwargs):
+        check = kwargs.pop('check', True)
+        if check is True:
+            self._valid_record(doc_or_docs)
         result = yield self.__collect.insert_one(doc_or_docs, **kwargs)
+        raise gen.Return(result)
+
+    @gen.coroutine
+    def insert_many(self, doc_or_docs, **kwargs):
+        check = kwargs.pop('check', True)
+        if check is True:
+            for i in doc_or_docs:
+                i = self._valid_record(i)
+        result = yield self.__collect.insert_many(doc_or_docs, **kwargs)
         raise gen.Return(result)
 
     @gen.coroutine
@@ -128,31 +150,14 @@ class BaseBaseModel(AbstractModel):
 
         raise gen.Return(result)
 
-    # def put(self, value, **kwargs):
-    #     if value:
-    #         return self.__gridfs.put(value, **kwargs)
-    #     return None
-
-    # def delete(self, _id):
-    #     return self.__gridfs.delete(self.to_objectid(_id))
-
-    # def get(self, _id):
-    #     return self.__gridfs.get(self.to_objectid(_id))
-
-    # def read(self, _id):
-    #     return self.__gridfs.get(self.to_objectid(_id)).read()
-
     @gen.coroutine
     def find_by_id(self, _id, *args):
         """find record by _id
         """
         if isinstance(_id, list) or isinstance(_id, tuple):
-            as_list = []
-            for i in _id:
-                result = yield self.__collect.find_one(
-                    {'_id': self._to_primary_key(i)}, *args)
-                as_list.append(result)
-            raise gen.Return(as_list)
+            result = yield self.find_many(
+                    {'_id': {'$in': [self._to_primary_key(i) for i in _id]}}, *args, limit=len(_id))
+            raise gen.Return(result)
 
         document_id = self._to_primary_key(_id)
 
@@ -165,12 +170,9 @@ class BaseBaseModel(AbstractModel):
     @gen.coroutine
     def remove_by_id(self, _id):
         if isinstance(_id, list) or isinstance(_id, tuple):
-            as_list = []
-            for i in _id:
-                result = yield self.__collect.delete_one(
-                    {'_id': self._to_primary_key(i)})
-                as_list.append(result)
-            raise gen.Return(as_list)
+            result = yield self.__collect.delete_many(
+                    {'_id': {'$in': [self._to_primary_key(i) for i in _id]}})
+            raise gen.Return(result)
 
         result = yield self.__collect.delete_one(
             {'_id': self._to_primary_key(_id)})
@@ -193,19 +195,6 @@ class BaseBaseModel(AbstractModel):
             as_list.append(doc)
 
         raise gen.Return([as_dict, as_list])
-
-    @gen.coroutine
-    def create(self, record=None, **args):
-        """Init the new record with field dict
-        """
-        if isinstance(record, list) or isinstance(record, tuple):
-            record = [self._valid_record(i) for i in record]
-
-        if isinstance(record, dict):
-            record = self._valid_record(record)
-
-        result = yield self.insert(record, **args)
-        raise gen.Return(result)
 
     @gen.coroutine
     def inc(self, filter_, key, num=1):
