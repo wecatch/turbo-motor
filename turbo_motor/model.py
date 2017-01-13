@@ -1,19 +1,14 @@
 # -*- coding: utf-8 -*-
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    with_statement,
-)
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import with_statement
 
-from tornado import gen
-from pymongo import DESCENDING
-from bson.objectid import ObjectId
 from motor.motor_tornado import MotorCollection
-from turbo.mongo_model import (
-    AbstractModel,
-    _record,
-)
+from pymongo import DESCENDING
+from tornado import gen
+from turbo.mongo_model import _record
+from turbo.mongo_model import AbstractModel
 
 
 class BaseBaseModel(AbstractModel):
@@ -48,10 +43,11 @@ class BaseBaseModel(AbstractModel):
             raise gen.Return(self._to_primary_key(result.inserted_id))
         else:
             if check is True:
-                for i in record:
-                    i = self._valid_record(i)
+                for d in doc_or_docs:
+                    d = self._valid_record(d)
             result = yield self.__collect.insert_many(doc_or_docs, **kwargs)
-            raise gen.Return([self._to_primary_key(i) for i in result.inserted_ids])
+            raise gen.Return([
+                self._to_primary_key(i) for i in result.inserted_ids])
 
     @gen.coroutine
     def save(self, to_save, **kwargs):
@@ -59,7 +55,8 @@ class BaseBaseModel(AbstractModel):
         """
         self._valid_record(to_save)
         if '_id' in to_save:
-            yield self.__collect.replace_one({'_id': to_save['_id']}, to_save, **kwargs)
+            yield self.__collect.replace_one(
+                {'_id': to_save['_id']}, to_save, **kwargs)
             raise gen.Return(to_save['_id'])
         else:
             result = yield self.__collect.insert_one(to_save, **kwargs)
@@ -156,7 +153,8 @@ class BaseBaseModel(AbstractModel):
         """
         if isinstance(_id, list) or isinstance(_id, tuple):
             result = yield self.find_many(
-                    {'_id': {'$in': [self._to_primary_key(i) for i in _id]}}, *args, limit=len(_id))
+                {'_id': {'$in': [self._to_primary_key(i) for i in _id]}},
+                *args, limit=len(_id))
             raise gen.Return(result)
 
         document_id = self._to_primary_key(_id)
@@ -171,7 +169,7 @@ class BaseBaseModel(AbstractModel):
     def remove_by_id(self, _id):
         if isinstance(_id, list) or isinstance(_id, tuple):
             result = yield self.__collect.delete_many(
-                    {'_id': {'$in': [self._to_primary_key(i) for i in _id]}})
+                {'_id': {'$in': [self._to_primary_key(i) for i in _id]}})
             raise gen.Return(result)
 
         result = yield self.__collect.delete_one(
@@ -187,6 +185,8 @@ class BaseBaseModel(AbstractModel):
 
     @gen.coroutine
     def get_as_dict(self, *args, **kwargs):
+        """no limit argument, result will be all record in collection
+        """
         cur = self.__collect.find(*args, **kwargs)
         as_dict, as_list = {}, []
         while (yield cur.fetch_next):

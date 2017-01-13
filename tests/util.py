@@ -1,9 +1,6 @@
-import datetime
 import tornado.ioloop
-from tornado import testing
-from tornado import gen
-import motor
 from bson.objectid import ObjectId
+
 
 def stop_loop():
     tornado.ioloop.IOLoop.instance().stop()
@@ -12,6 +9,7 @@ def stop_loop():
 def start_loop():
     ioloop = tornado.ioloop.IOLoop.current()
     ioloop.start()
+
 
 fake_ids = [
     ObjectId('586a01b6ed80083a5087c7d7'),
@@ -58,6 +56,7 @@ fake_ids = [
     ObjectId('586a01b6ed80083a5087c807'),
     ObjectId('586a01b6ed80083a5087c808')
 ]
+
 
 fake_ids_2 = [
     ObjectId('586a09f9ed80083a5087c809'),

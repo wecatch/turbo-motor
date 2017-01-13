@@ -1,5 +1,8 @@
-#-*- coding:utf-8 -*-
-from __future__ import absolute_import, division, print_function, with_statement
+# -*- coding:utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import with_statement
 
 """
 test_turbo_motor
@@ -7,13 +10,8 @@ test_turbo_motor
 
 Tests for `model` module.
 """
-
-import os
-import sys
 import datetime
-import json
-import StringIO
-import inspect
+import os
 import unittest
 
 from bson.objectid import ObjectId
@@ -22,9 +20,6 @@ from pymongo import (
     MongoClient
 )
 from tornado.testing import gen_test, AsyncTestCase
-from tornado import gen
-from tornado.queues import Queue
-from motor import motor_tornado
 import motor
 from turbo_motor.model import BaseModel
 from tests.util import fake_ids, fake_ids_2
@@ -173,7 +168,7 @@ class BaseModelTest(AsyncTestCase):
         cursor = self.tb_tag.find()
         count = 0
         while (yield cursor.fetch_next):
-            doc = cursor.next_object()
+            cursor.next_object()
             count += 1
         self.assertGreater(count, 40)
 
