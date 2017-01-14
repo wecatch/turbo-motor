@@ -147,13 +147,38 @@ class BaseBaseModel(AbstractModel):
         raise gen.Return(result)
 
     @gen.coroutine
-    def find_by_id(self, _id, *args):
+    def update_one(self, filter_, document, **kwargs):
+        """update method
+        """
+        self._valide_update_document(document)
+        result = yield self.__collect.update_one(filter_, document, **kwargs)
+        raise gen.Return(result)
+
+    @gen.coroutine
+    def update_many(self, filter_, document, **kwargs):
+        self._valide_update_document(document)
+        result = yield self.__collect.update_many(filter_, document, **kwargs)
+        raise gen.Return(result)
+
+    @gen.coroutine
+    def delete_many(self, filter_):
+        if isinstance(filter_, dict) and filter_ == {}:
+            raise ValueError("not allowed remove all documents")
+
+        if filter_ is None:
+            raise ValueError("not allowed remove all documents")
+
+        result = yield self.__collect.delete_many(filter_)
+        raise gen.Return(result)
+
+    @gen.coroutine
+    def find_by_id(self, _id, projection=None):
         """find record by _id
         """
         if isinstance(_id, list) or isinstance(_id, tuple):
             result = yield self.find_many(
                 {'_id': {'$in': [self._to_primary_key(i) for i in _id]}},
-                *args, limit=len(_id))
+                projection, limit=len(_id))
             raise gen.Return(result)
 
         document_id = self._to_primary_key(_id)
@@ -161,7 +186,7 @@ class BaseBaseModel(AbstractModel):
         if document_id is None:
             raise gen.Return(None)
 
-        result = yield self.__collect.find_one({'_id': document_id}, *args)
+        result = yield self.__collect.find_one({'_id': document_id}, projection)
         raise gen.Return(result)
 
     @gen.coroutine

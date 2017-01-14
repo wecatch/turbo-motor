@@ -29,7 +29,7 @@ os.environ['ASYNC_TEST_TIMEOUT'] = '10'
 
 class Tag(BaseModel):
 
-    name = 'tag'
+    name = 'turbo_motor_tag'
     field = {
         'list': (list, []),
         'imgid': (ObjectId, None),
@@ -66,12 +66,12 @@ class BaseModelTest(AsyncTestCase):
         self._clean_data()
 
     def _make_data(self):
-        tb_tag = MongoClient()['test']['tag']
+        tb_tag = MongoClient()['test']['turbo_motor_tag']
         for i in fake_ids:
             tb_tag.insert_one({'_id': i})
 
     def _clean_data(self):
-        tb_tag = MongoClient()['test']['tag']
+        tb_tag = MongoClient()['test']['turbo_motor_tag']
         for i in fake_ids:
             tb_tag.delete_one({'_id': i})
         for i in fake_ids_2:
@@ -79,6 +79,26 @@ class BaseModelTest(AsyncTestCase):
 
     @gen_test
     def test_insert(self):
+        record = {
+            'list': [
+                {'key': ObjectId(), 'key2': 'test', 'key3': ObjectId()},
+                10,
+                12,
+                13,
+                ['name', 'name', 'name', ObjectId(), ObjectId()],
+                datetime.datetime.now(),
+            ],
+            'imgid': ObjectId(),
+            'up': {
+                'key1': ObjectId(),
+                'key2': ObjectId(),
+                'key3': ObjectId(),
+            }
+        }
+
+        result = yield self.tb_tag.insert(record)
+        self.assertIsInstance(result, ObjectId)
+
         # insert one
         _id = yield self.tb_tag.insert({'_id': fake_ids_2[0]})
         self.assertEqual(_id, fake_ids_2[0])
@@ -98,7 +118,6 @@ class BaseModelTest(AsyncTestCase):
 
         # insert many
         docs = [{'_id': i} for i in fake_ids_2[1:]]
-        print(docs)
         result = yield self.tb_tag.insert(docs)
         for i in result:
             self.assertIn(i, fake_ids_2)
@@ -179,8 +198,6 @@ class BaseModelTest(AsyncTestCase):
         result = yield self.tb_tag.find_one()
         self.assertIsNot(result, None)
 
-    @gen_test
-    def test_find_one_with_wrapper(self):
         # test find_one default wrapper=False
         with self.assertRaises(KeyError):
             result = yield self.tb_tag.find_one(wrapper=False)
@@ -191,11 +208,58 @@ class BaseModelTest(AsyncTestCase):
         self.assertEqual(result['key'], None)
 
     @gen_test
+    def test_find_many(self):
+        result = yield self.tb_tag.find_many(limit=10)
+        self.assertEqual(len(result), 10)
+
+        # no wrapper
+        for i in result:
+            with self.assertRaises(KeyError):
+                i['nokey']
+
+        result = yield self.tb_tag.find_many()
+        self.assertEqual(len(result), 1)
+
+        # with wrapper
+        result = yield self.tb_tag.find_many(limit=10, wrapper=True)
+        self.assertEqual(len(result), 10)
+        for i in result:
+            self.assertEqual(i['nokey'], None)
+
+    @gen_test
+    def test_update_one(self):
+        with self.assertRaises(ValueError):
+            yield self.tb_tag.update_one({}, {'hello': 0})
+
+        yield self.tb_tag.update_one({}, {'$set': {'hellow': 0}})
+
+    @gen_test
+    def test_update_many(self):
+        with self.assertRaises(ValueError):
+            yield self.tb_tag.update_many({}, {'hello': 0})
+
+        yield self.tb_tag.update_many({}, {'$set': {'value': 1}})
+        result = yield self.tb_tag.find_many(limit=1000)
+        for i in result:
+            self.assertEqual(i['value'], 1)
+
+    @gen_test
+    def test_delete_many(self):
+        with self.assertRaises(Exception):
+            yield self.tb_tag.delete_many({})
+
+        for i in fake_ids:
+            yield self.tb_tag.delete_many({'_id': i})
+            result = yield self.tb_tag.find_by_id(i)
+            self.assertIsNone(result)
+
+    @gen_test
     def test_find_by_id(self):
         result = yield self.tb_tag.find_by_id(fake_ids[0])
         self.assertEqual(result['_id'], fake_ids[0])
 
         result = yield self.tb_tag.find_by_id(fake_ids[0:10])
+        self.assertEqual(len(result), 10)
         for index, i in enumerate(result):
             self.assertEqual(i['_id'], fake_ids[0:10][index])
 
@@ -216,11 +280,6 @@ class BaseModelTest(AsyncTestCase):
         yield self.tb_tag.remove_by_id(_id)
 
     @gen_test
-    def test_find_many(self):
-        result = yield self.tb_tag.find_many(limit=10)
-        self.assertEqual(len(result), 10)
-
-    @gen_test
     def test_find(self):
         cursor = self.tb_tag.find()
         count = 0
@@ -231,8 +290,12 @@ class BaseModelTest(AsyncTestCase):
 
     @gen_test
     def test_get_as_dict(self):
-        d, ll = yield self.tb_tag.get_as_dict()
-        self.assertEqual(len(d), len(ll))
+        as_dict, as_list = yield self.tb_tag.get_as_dict({'_id': {'$in': fake_ids[0:10]}})
+        for index, i in enumerate(as_dict.keys()):
+            self.assertIn(i, fake_ids[0:10])
+
+        for i in as_list:
+            self.assertIn(i['_id'], fake_ids[0:10])
 
     @gen_test
     def test_find_new_one(self):
