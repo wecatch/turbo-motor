@@ -32,7 +32,7 @@ class BaseBaseModel(AbstractModel):
     @gen.coroutine
     def insert(self, doc_or_docs, **kwargs):
         """
-        return
+        return:
             insert doc _id backwards compatibility
         """
         check = kwargs.pop('check', True)
@@ -46,8 +46,7 @@ class BaseBaseModel(AbstractModel):
                 for d in doc_or_docs:
                     d = self._valid_record(d)
             result = yield self.__collect.insert_many(doc_or_docs, **kwargs)
-            raise gen.Return([
-                self._to_primary_key(i) for i in result.inserted_ids])
+            raise gen.Return(result.inserted_ids)
 
     @gen.coroutine
     def save(self, to_save, **kwargs):
