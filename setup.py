@@ -10,14 +10,11 @@ with open('HISTORY.rst') as history_file:
 
 requirements = [
     'Click>=6.0',
-    'pymongo==3.4',
+    'pymongo>=3.2',
     'motor==1.1',
-    'turbo==0.4.5'
+    'turbo>=0.4.5'
 ]
 
-test_requirements = [
-    # TODO: put package test requirements here
-]
 
 setup(
     name='turbo_motor',
@@ -32,11 +29,6 @@ setup(
     ],
     package_dir={'turbo_motor':
                  'turbo_motor'},
-    entry_points={
-        'console_scripts': [
-            'turbo_motor=turbo_motor.cli:main'
-        ]
-    },
     include_package_data=True,
     install_requires=requirements,
     license="Apache Software License 2.0",
@@ -50,11 +42,5 @@ setup(
         "Programming Language :: Python :: 2",
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-    ],
-    test_suite='tests',
-    tests_require=test_requirements
+    ]
 )

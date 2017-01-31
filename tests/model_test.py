@@ -119,9 +119,11 @@ class BaseModelTest(AsyncTestCase):
         # insert many
         docs = [{'_id': i} for i in fake_ids_2[1:]]
         result = yield self.tb_tag.insert(docs)
+        self.assertEqual(1, len(result))
         for i in result:
             self.assertIn(i, fake_ids_2)
-        result = yield self.tb_tag.find_by_id([fake_ids_2[1:]])
+        result = yield self.tb_tag.find_by_id(fake_ids_2[1:])
+        self.assertEqual(1, len(result))
         for i in result:
             self.assertEqual(i['value'], 0)
 
