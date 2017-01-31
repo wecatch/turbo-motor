@@ -18,7 +18,7 @@ install:
 
 # command to run tests, e.g. python setup.py test
 script:
-  - tox -e ${TOXENV}
+  - pip install -r requirements_dev.txt
   - coverage run -m tests.runtests
 
 after_success:
