@@ -155,12 +155,14 @@ class BaseModelTest(AsyncTestCase):
         # update one
         result = yield self.tb_tag.update({'_id': {'$in': fake_ids[1:11]}}, {'$set': {'value': 11}})
         self.assertEqual(result.matched_count, 1)
-        self.assertEqual(result.modified_count, 1)
+        if result.modified_count is not None:
+            self.assertEqual(result.modified_count, 1)
 
         # update many
         result = yield self.tb_tag.update({'_id': {'$in': fake_ids[2:12]}}, {'$set': {'value': 11}}, multi=True)
         self.assertEqual(result.matched_count, 10)
-        self.assertEqual(result.modified_count, 10)
+        if result.modified_count is not None:
+            self.assertEqual(result.modified_count, 10)
 
     @gen_test
     def test_remove(self):

@@ -18,7 +18,8 @@ install:
 
 # command to run tests, e.g. python setup.py test
 script:
-  - pip install -r requirements_dev.txt
+  - pip install turbo>=0.4.5
+  - pip install motor==1.1
   - coverage run -m tests.runtests
 
 after_success:
