@@ -10,7 +10,11 @@ services:
   - mongodb
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
-install: pip install -U tox
+install:
+  - pip install -U tox
+  - pip install turbo>=0.4.5
+  - pip install codecov
+  - pip install coverage
 
 # command to run tests, e.g. python setup.py test
 script:
