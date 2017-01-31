@@ -18,15 +18,10 @@ turbo-motor
      :alt: Updates
 
 
-Turbo motor plugin
 
 
 * Free software: Apache Software License 2.0
 * Documentation: https://turbo-motor.readthedocs.io.
 
 
-Features
---------
-
-* support [turbo](https://github.com/wecatch/app-turbo) use [Motor](http://motor.readthedocs.io/en/stable/)
-
+Turbo motor plugin, support `turbo <https://github.com/wecatch/app-turbo>`_ use `Motor <http://motor.readthedocs.io/en/stable/>`_.
