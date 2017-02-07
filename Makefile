@@ -93,3 +93,7 @@ hooks-install:
 
 hooks-run:
 	pre-commit run --all-files
+patch:
+	bumpversion patch
+minor:
+	bumpversion minor

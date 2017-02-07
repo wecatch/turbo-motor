@@ -18,7 +18,7 @@ requirements = [
 
 setup(
     name='turbo_motor',
-    version='0.0.2',
+    version='0.0.3',
     description="Turbo motor plugin",
     long_description=readme + '\n\n' + history,
     author="zhyq0826",
