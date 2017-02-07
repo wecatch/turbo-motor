@@ -1,7 +1,7 @@
 turbo-motor
 ===============================
 
-[![pypi](https://img.shields.io/pypi/v/turbo-motor.svg)](https://pypi.python.org/pypi/turbo-motor)
+[![pypi](https://img.shields.io/pypi/v/turbo_motor.svg)](https://pypi.python.org/pypi/turbo-motor)
 [![Build Status](https://travis-ci.org/wecatch/turbo-motor.svg?branch=master)](https://travis-ci.org/wecatch/turbo-motor)
 [![codecov](https://codecov.io/github/wecatch/turbo-motor/coverage.svg?branch=master)](https://codecov.io/github/wecatch/turbo-motor?branch=master)
 [![readthedocs](https://readthedocs.org/projects/turbo-motor/badge/?version=latest)](https://turbo-motor.readthedocs.io/en/latest/)
