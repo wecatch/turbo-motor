@@ -77,8 +77,9 @@ servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
 release: clean ## package and upload a release
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
+	python setup.py sdist bdist_wheel
+	# python setup.py bdist_wheel
+	twine upload dist/*
 
 dist: clean ## builds source and wheel package
 	python setup.py sdist
@@ -94,6 +95,6 @@ hooks-install:
 hooks-run:
 	pre-commit run --all-files
 patch:
-	bumpversion patch
+	bumpversion patch --allow-dirty
 minor:
-	bumpversion minor
+	bumpversion minor --allow-dirty
